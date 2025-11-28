@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App shell defaults */
+html, body, #root {
+  height: 100%;
+}
+body {
+  @apply bg-white text-gray-800 transition-colors duration-300;
+}
+
+.dark body {
+  background-color: #0B1220;
+  @apply text-gray-100;
+}
+
+@layer utilities {
+  /* Ensure utility exists for use in @apply or markup */
+  .bg-surface-dark {
+    background-color: #0B1220;
+  }
+  /* Themed horizontal scrollbar for overflow containers */
+  .themed-scrollbar {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #22C55E #0F1A2E;
+  }
+  .themed-scrollbar::-webkit-scrollbar {
+    height: 10px; /* horizontal thickness */
+  }
+  .themed-scrollbar::-webkit-scrollbar-track {
+    background: linear-gradient(90deg, #0F1A2E, #0D1628);
+    border-radius: 9999px;
+  }
+  .themed-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #22C55E, #A3E635);
+    border-radius: 9999px;
+    border: 2px solid #1E2A3D; /* creates padded, pill look */
+  }
+  .themed-scrollbar::-webkit-scrollbar-thumb:hover {
+    filter: brightness(1.08);
+  }
+}
+
+/* Smooth theme transition container helper */
+.theme-container {
+  @apply transition-colors duration-300;
+}
+
+/* Card and surface helpers */
+.card {
+  @apply bg-white dark:bg-brand-card border border-gray-200 dark:border-brand-border rounded-xl shadow-sm transition-colors;
+}
+
+/* Table helpers */
+.table-surface {
+  @apply bg-white dark:bg-brand-card transition-colors;
+}
+
+/* Brand buttons and badges */
+.btn-primary {
+  @apply bg-brand-emerald text-white hover:brightness-110 transition;
+}
+.badge-pending {
+  @apply text-brand-amber ring-1 ring-brand-amber/40 px-2 py-0.5 rounded-full bg-brand-card/40;
+}
+.badge-paid {
+  @apply text-brand-emerald ring-1 ring-brand-emerald/40 px-2 py-0.5 rounded-full bg-brand-card/40;
+}
