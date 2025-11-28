@@ -37,6 +37,39 @@ Build:
 npm run build
 ```
 
+## Deployment (GitHub Pages)
+
+This project is configured for GitHub Pages at `https://mohidul-hq.github.io/Insurance_MS/`.
+
+### One-time setup
+1. Ensure remote is set: `git remote -v` should show the GitHub URL.
+2. Branch name is `main` (workflow triggers on it).
+3. `vite.config.js` sets `base: '/Insurance_MS/'` so assets resolve correctly.
+
+### Manual deploy
+
+```powershell
+npm run deploy
+```
+This builds the site and publishes the `dist` folder to the `gh-pages` branch.
+
+### Automatic deploy (GitHub Actions)
+The workflow `.github/workflows/deploy.yml` builds and deploys on every push to `main`.
+
+### After deploying
+First publish may take a couple of minutes. In the repository Settings > Pages, confirm the source is the `gh-pages` branch. Then visit:
+```
+https://mohidul-hq.github.io/Insurance_MS/
+```
+
+If you see 404s for assets, confirm the `base` path in `vite.config.js` matches the repository name and clear browser cache.
+
+### Common issues
+- Wrong base path: ensure `/Insurance_MS/` (case-sensitive) is used.
+- Remote not set: configure with `git remote add origin https://github.com/mohidul-hq/Insurance_MS.git`.
+- Old cache: force refresh (Ctrl+F5).
+
+
 Environment variable notes:
 - Vite only exposes variables prefixed with `VITE_`
 - `.env` changes require server restart
