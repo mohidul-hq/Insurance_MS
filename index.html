@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  <!-- Favicons -->
+  <link rel="icon" type="image/svg+xml" href="/Insurance_MS/favicon.svg" />
+  <link rel="mask-icon" href="/Insurance_MS/safari-pinned-tab.svg" color="#22C55E" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/Insurance_MS/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insurance Manager</title>
+  <meta name="theme-color" content="#0B1220" />
+  <meta name="description" content="Vehicle Insurance Manager: policies, PDFs, and lookup" />
+    <script>
+      // Apply theme class before CSS loads to avoid flash
+      (function() {
+        try {
+          var stored = localStorage.getItem('theme');
+          var theme = stored === 'dark' || stored === 'light' ? stored : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          if (theme === 'dark') document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+        } catch (e) {
+          // no-op
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/Insurance_MS/assets/index-H7UDdcD8.js"></script>
+    <link rel="stylesheet" crossorigin href="/Insurance_MS/assets/index-CnZH9F6C.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
