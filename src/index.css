@@ -2,6 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom animations & shadows for login UI */
+.shadow-input {
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 0 0 4px rgba(56, 189, 248, 0);
+}
+.shadow-input:focus {
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 0 0 4px rgba(56, 189, 248, 0.15);
+}
+
+.shadow-button {
+  box-shadow: 0 8px 16px -8px rgba(14, 165, 233, 0.35);
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-rise-in { animation: rise-in 400ms ease-out both; }
+
+@keyframes float-slow {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-8px) translateX(6px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+.animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+
+@keyframes float-slower {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(10px) translateX(-8px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+.animate-float-slower { animation: float-slower 10s ease-in-out infinite; }
+
+/* Portal success animation */
+.portal-ring {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 9999px;
+  border: 2px solid rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 30px rgba(99,102,241,0.5), inset 0 0 20px rgba(99,102,241,0.35);
+  animation: portal-pulse 900ms ease-out forwards;
+}
+.portal-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: radial-gradient(circle at 50% 50%, rgba(56,189,248,0.95), rgba(99,102,241,0.85));
+  box-shadow: 0 0 30px rgba(56,189,248,0.6), 0 0 60px rgba(99,102,241,0.5);
+  animation: core-flash 900ms ease-out forwards;
+}
+
+@keyframes portal-pulse {
+  0% { opacity: 0; transform: scale(0.6); }
+  30% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@keyframes core-flash {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+}
+
 /* App shell defaults */
 html, body, #root {
   height: 100%;
