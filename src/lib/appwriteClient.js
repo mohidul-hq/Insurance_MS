@@ -7,7 +7,7 @@
 // - POLICY_BUCKET_ID (for PDF files)
 // - KYC_BUCKET_ID (for image files)
 
-import { Client, Databases, Storage, ID, Query } from 'appwrite'
+import { Client, Databases, Storage, ID, Query, Account } from 'appwrite'
 
 // Read runtime config from Vite env (supports .env files)
 // Vite exposes env vars prefixed with VITE_
@@ -34,4 +34,5 @@ const client = new Client()
 
 export const databases = new Databases(client)
 export const storage = new Storage(client)
+export const account = new Account(client)
 export { ID, Query }

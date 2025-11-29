@@ -7,8 +7,11 @@ import PolicyDetailsModal from './components/PolicyDetailsModal'
 import PolicyLookup from './components/PolicyLookup'
 import Dashboard from './components/Dashboard'
 import { config } from './lib/appwriteClient'
+import Login from './components/Login'
+import { useAuth } from './components/AuthProvider'
 
 function App() {
+  const { user, loading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [view, setView] = useState('list') // 'dashboard' | 'list' | 'lookup' | 'create' | 'edit'
   const [selected, setSelected] = useState(null)
@@ -23,6 +26,18 @@ function App() {
   const onEdit = (item) => { setSelected(item); setView('edit') }
   const onView = (item) => { setSelected(item); setView('list'); setDetailsOpen(true) }
   const [detailsOpen, setDetailsOpen] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black">
+        <div className="animate-pulse text-gray-600 dark:text-gray-300">Loading…</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Login />
+  }
 
   return (
     <div className="min-h-full theme-container">
