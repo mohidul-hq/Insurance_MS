@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from './AuthProvider'
 
 export default function Login() {
@@ -6,10 +6,30 @@ export default function Login() {
   const [mode, setMode] = useState('login') // or 'register'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [localError, setLocalError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const containerRef = useRef(null)
+  const [cursor, setCursor] = useState({ x: 0.5, y: 0.5 })
+
+  // Track mouse position to drive dynamic effects
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const onMove = (e) => {
+      const rect = el.getBoundingClientRect()
+      const x = (e.clientX - rect.left) / rect.width
+      const y = (e.clientY - rect.top) / rect.height
+      setCursor({ x, y })
+      // Update CSS variables for gradient center and parallax
+      el.style.setProperty('--mx', `${x}`)
+      el.style.setProperty('--my', `${y}`)
+    }
+    el.addEventListener('mousemove', onMove)
+    return () => el.removeEventListener('mousemove', onMove)
+  }, [])
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -31,12 +51,12 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gray-50 dark:bg-black px-4 overflow-hidden">
+    <div ref={containerRef} className="min-h-screen relative flex items-center justify-center bg-gray-50 dark:bg-black px-4 overflow-hidden cursor-gradient">
       {/* Ambient animated blobs */}
-      <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-gradient-to-br from-sky-400/40 to-cyan-300/30 blur-3xl animate-float-slow" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-gradient-to-br from-fuchsia-400/40 to-indigo-300/30 blur-3xl animate-float-slower" />
+      <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-gradient-to-br from-sky-400/40 to-cyan-300/30 blur-3xl animate-float-slow parallax" style={{ transform: `translate3d(${(cursor.x-0.5)*10}px, ${(cursor.y-0.5)*10}px, 0)` }} />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-gradient-to-br from-fuchsia-400/40 to-indigo-300/30 blur-3xl animate-float-slower parallax" style={{ transform: `translate3d(${(cursor.x-0.5)*-12}px, ${(cursor.y-0.5)*-12}px, 0)` }} />
       {/* Card */}
-      <div className="w-full max-w-md space-y-6 bg-white/70 dark:bg-white/10 backdrop-blur-xl shadow-lg rounded-2xl p-6 border border-white/40 dark:border-white/10 animate-rise-in">
+      <div className="w-full max-w-md space-y-6 bg-white/70 dark:bg-white/10 backdrop-blur-xl shadow-lg rounded-2xl p-6 border border-white/40 dark:border-white/10 animate-rise-in card-glow" style={{ boxShadow: `0 10px 30px -10px rgba(56, 189, 248, ${0.15 + (cursor.x+cursor.y)/12})` }}>
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{mode === 'login' ? 'Sign in' : 'Create account'}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Access the Policy Manager</p>
@@ -54,7 +74,29 @@ export default function Login() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300" htmlFor="password">Password</label>
-            <input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input" />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(s => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/20"
+              >
+                {/* Eye icon */}
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3.98 8.223C5.62 6.319 8.58 3.75 12 3.75c3.42 0 6.38 2.569 8.02 4.473.96 1.128.96 3.426 0 4.554-1.64 1.904-4.6 4.473-8.02 4.473-3.42 0-6.38-2.569-8.02-4.473-.96-1.128-.96-3.426 0-4.554z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9a3 3 0 100 6 3 3 0 000-6z"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3l18 18M10.584 5.207A8.41 8.41 0 0112 5c3.42 0 6.38 2.569 8.02 4.473.96 1.128.96 3.426 0 4.554-.403.468-.884.96-1.43 1.457M6.88 6.88C5.614 7.877 4.57 8.933 3.98 9.777c-.96 1.128-.96 3.426 0 4.554C5.62 16.235 8.58 18.804 12 18.804c1.02 0 2.008-.186 2.94-.53M9 12a3 3 0 104.243 2.121"/></svg>
+                )}
+              </button>
+            </div>
           </div>
           {(error || localError) && (
             <div className="text-sm text-red-600 dark:text-red-400">{error || localError}</div>
@@ -65,7 +107,7 @@ export default function Login() {
             className="w-full relative overflow-hidden inline-flex justify-center items-center gap-2 rounded-md bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 disabled:opacity-60 text-white px-4 py-2 text-sm font-medium transition-all shadow-button"
           >
             <span className="relative z-10">{submitting ? 'Please wait…' : (mode === 'login' ? 'Sign in' : 'Register')}</span>
-            <span className="absolute inset-0 opacity-0 hover:opacity-100 bg-white/10" />
+            <span className="pointer-events-none absolute inset-0 cursor-shine" />
           </button>
         </form>
         <div className="flex items-center gap-3">
@@ -93,6 +135,9 @@ export default function Login() {
             <div className="portal-ring" />
             <div className="portal-ring delay-150" />
             <div className="portal-core" />
+            {/* Ripple bursts */}
+            <div className="success-ripple" />
+            <div className="success-ripple delay-200" />
           </div>
         </div>
       )}
