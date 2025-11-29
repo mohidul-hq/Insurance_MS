@@ -12,6 +12,33 @@ export default function Navbar({ onToggleSidebar }) {
           <span className="font-semibold text-lg text-gray-800 dark:text-gray-100 transition-colors">Policy Manager</span>
         </div>
         <div className="flex items-center gap-4">
+          {/* External apps */}
+          <div className="hidden md:flex items-center gap-2">
+            <a
+              href="https://mohidul-hq.github.io/DigitalRefundMS/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-md border border-gray-200 dark:border-brand-border bg-white dark:bg-brand-card text-gray-700 dark:text-brand-text hover:bg-gray-50 dark:hover:bg-brand-hover px-3 py-1.5 text-sm"
+            >
+              Refund MS
+            </a>
+            <a
+              href="https://mohidul-hq.github.io/DigitalSevaService_Invoice/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-md border border-gray-200 dark:border-brand-border bg-white dark:bg-brand-card text-gray-700 dark:text-brand-text hover:bg-gray-50 dark:hover:bg-brand-hover px-3 py-1.5 text-sm"
+            >
+              Invoice
+            </a>
+            <a
+              href="https://mohidul-hq.github.io/Deposit-MS/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-md border border-gray-200 dark:border-brand-border bg-white dark:bg-brand-card text-gray-700 dark:text-brand-text hover:bg-gray-50 dark:hover:bg-brand-hover px-3 py-1.5 text-sm"
+            >
+              Deposit MS
+            </a>
+          </div>
           {user && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">
