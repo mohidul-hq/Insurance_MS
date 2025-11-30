@@ -53,10 +53,10 @@ export default function Login() {
   return (
     <div ref={containerRef} className="min-h-screen relative flex items-center justify-center bg-gray-50 dark:bg-black px-4 overflow-hidden cursor-gradient">
       {/* Ambient animated blobs */}
-      <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-gradient-to-br from-sky-400/40 to-cyan-300/30 blur-3xl animate-float-slow parallax" style={{ transform: `translate3d(${(cursor.x-0.5)*10}px, ${(cursor.y-0.5)*10}px, 0)` }} />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-gradient-to-br from-fuchsia-400/40 to-indigo-300/30 blur-3xl animate-float-slower parallax" style={{ transform: `translate3d(${(cursor.x-0.5)*-12}px, ${(cursor.y-0.5)*-12}px, 0)` }} />
+      <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-gradient-to-br from-sky-400/50 to-cyan-300/40 blur-3xl animate-float-slow parallax" style={{ transform: `translate3d(${(cursor.x-0.5)*18}px, ${(cursor.y-0.5)*18}px, 0)` }} />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-gradient-to-br from-fuchsia-400/50 to-indigo-300/40 blur-3xl animate-float-slower parallax" style={{ transform: `translate3d(${(cursor.x-0.5)*-20}px, ${(cursor.y-0.5)*-20}px, 0)` }} />
       {/* Card */}
-      <div className="w-full max-w-md space-y-6 bg-white/70 dark:bg-white/10 backdrop-blur-xl shadow-lg rounded-2xl p-6 border border-white/40 dark:border-white/10 animate-rise-in card-glow" style={{ boxShadow: `0 10px 30px -10px rgba(56, 189, 248, ${0.15 + (cursor.x+cursor.y)/12})` }}>
+      <div className="relative z-10 w-full max-w-md space-y-6 bg-white/70 dark:bg-white/10 backdrop-blur-xl shadow-lg rounded-2xl p-6 border border-white/40 dark:border-white/10 animate-rise-in card-glow" style={{ boxShadow: `0 10px 30px -10px rgba(56, 189, 248, ${0.15 + (cursor.x+cursor.y)/12})` }}>
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{mode === 'login' ? 'Sign in' : 'Create account'}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Access the Policy Manager</p>
@@ -65,12 +65,12 @@ export default function Login() {
           {mode === 'register' && (
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300" htmlFor="name">Name</label>
-              <input id="name" type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input" />
+              <input id="name" type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input transition-transform hover:scale-[1.01]" />
             </div>
           )}
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300" htmlFor="email">Email</label>
-            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input" />
+            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input transition-transform hover:scale-[1.01]" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300" htmlFor="password">Password</label>
@@ -81,7 +81,7 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 shadow-input transition-transform hover:scale-[1.01]"
               />
               <button
                 type="button"
@@ -141,6 +141,8 @@ export default function Login() {
           </div>
         </div>
       )}
+      {/* Cursor spotlight light effect */}
+      <div className="pointer-events-none absolute inset-0 z-0 cursor-spotlight" />
     </div>
   )
 }
