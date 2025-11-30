@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 import PolicyTable from './components/PolicyTable'
@@ -26,6 +26,11 @@ function App() {
   const onEdit = (item) => { setSelected(item); setView('edit') }
   const onView = (item) => { setSelected(item); setView('list'); setDetailsOpen(true) }
   const [detailsOpen, setDetailsOpen] = useState(false)
+
+  // After login, land on dashboard by default
+  useEffect(() => {
+    if (user) setView('dashboard')
+  }, [user])
 
   if (loading) {
     return (

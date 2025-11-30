@@ -1,5 +1,23 @@
 import { databases, storage, ID, Query, config } from '../lib/appwriteClient'
 
+// In-memory cache for faster UI reads
+const _cache = new Map()
+const PAGE_SIZE = 10
+function _key(params) {
+  const { search = '', filter = '', limit = PAGE_SIZE, offset = 0 } = params || {}
+  return JSON.stringify({ search, filter, limit, offset })
+}
+function _get(params) {
+  const k = _key(params)
+  const entry = _cache.get(k)
+  if (!entry) return null
+  const TTL_MS = 60 * 1000
+  if (Date.now() - entry.ts > TTL_MS) { _cache.delete(k); return null }
+  return entry.value
+}
+function _set(params, value) { _cache.set(_key(params), { value, ts: Date.now() }) }
+function _clear() { _cache.clear() }
+
 // File reference field (configurable via env to match your Appwrite attribute)
 // Default: 'policyFileId' but you can set VITE_POLICY_FILE_FIELD to override
 export const FILE_FIELD = import.meta.env.VITE_POLICY_FILE_FIELD || 'policyFileId'
@@ -35,7 +53,6 @@ function ensureRequired(payload) {
 }
 
 // Utilities
-const PAGE_SIZE = 10
 
 export function formatDateTime(iso) {
   try {
@@ -73,6 +90,9 @@ export function getDocFileId(doc) {
 }
 
 export async function getPolicies({ search = '', filter = '', limit = PAGE_SIZE, offset = 0 } = {}) {
+  // Cache first
+  const cached = _get({ search, filter, limit, offset })
+  if (cached) return { ...cached, cached: true }
   // Base queries
   const base = [Query.limit(limit), Query.offset(offset), Query.orderDesc('$createdAt')]
   if (filter) base.push(Query.equal('LOPV', filter))
@@ -82,7 +102,9 @@ export async function getPolicies({ search = '', filter = '', limit = PAGE_SIZE,
     try {
       const q = [...base, Query.search('Registration_Number', search)]
       const res = await databases.listDocuments(config.databaseId, config.collectionId, q)
-      return { documents: res.documents, total: res.total, serverSearch: true }
+      const result = { documents: res.documents, total: res.total, serverSearch: true }
+      _set({ search, filter, limit, offset }, result)
+      return result
     } catch (err) {
       // Fallback if fulltext index is missing or search not supported
       if (import.meta.env.VITE_DEBUG_POLICY === 'true') {
@@ -102,7 +124,9 @@ export async function getPolicies({ search = '', filter = '', limit = PAGE_SIZE,
         .some((v) => String(v).toLowerCase().includes(s))
     )
   }
-  return { documents, total: res.total, serverSearch: false }
+  const result = { documents, total: res.total, serverSearch: false }
+  _set({ search, filter, limit, offset }, result)
+  return result
 }
 
 export async function uploadPolicyPdf(file, registrationNumber) {
@@ -163,6 +187,7 @@ export async function createPolicy(data, files = {}) {
   }
   try {
     const doc = await databases.createDocument(config.databaseId, config.collectionId, ID.unique(), payload)
+    _clear()
     return { doc, uploadError, suppressedFileLink: false }
   } catch (e) {
     // If backend rejects an unknown file id attribute, retry without it (handles both 'policyFileId' and 'policyFileld')
@@ -174,6 +199,7 @@ export async function createPolicy(data, files = {}) {
       delete payload.policyFileld
       try {
         const doc = await databases.createDocument(config.databaseId, config.collectionId, ID.unique(), payload)
+        _clear()
         if (import.meta.env.VITE_DEBUG_POLICY === 'true') {
           console.warn('[createPolicy] Retried without file id due to unknown attribute. Stored document without link to file.')
         }
@@ -214,6 +240,7 @@ export async function updatePolicy(id, data, files = {}) {
     if (files.currentPolicyFileId && payload[FILE_FIELD]) {
       try { await storage.deleteFile(config.POLICY_BUCKET_ID, files.currentPolicyFileId) } catch {}
     }
+    _clear()
     return { doc, uploadError, suppressedFileLink: false }
   } catch (e) {
     const msg = String(e?.message || '')
@@ -223,6 +250,7 @@ export async function updatePolicy(id, data, files = {}) {
       delete payload[FILE_FIELD]
       delete payload.policyFileld
       const doc = await databases.updateDocument(config.databaseId, config.collectionId, id, payload)
+      _clear()
       return { doc, uploadError, suppressedFileLink: true }
     }
     console.error('[updatePolicy] Appwrite error:', { message: e?.message, code: e?.code, response: e?.response })
@@ -236,6 +264,7 @@ export async function deletePolicy(id, fileMeta = {}) {
     try { await storage.deleteFile(config.POLICY_BUCKET_ID, fileId) } catch {}
   }
   await databases.deleteDocument(config.databaseId, config.collectionId, id)
+  _clear()
 }
 
 // Read helpers
