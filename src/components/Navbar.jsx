@@ -50,15 +50,7 @@ export default function Navbar({ onToggleSidebar }) {
           <button className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800" title="Logout" onClick={logout}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5 text-gray-600 dark:text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
           </button>
-          <button
-            type="button"
-            aria-label="Toggle theme"
-            onClick={() => import('../utils/theme').then(m => m.toggleTheme())}
-            className="p-2 rounded-md border border-gray-200 dark:border-brand-border bg-gray-50 dark:bg-brand-card text-gray-700 dark:text-brand-text hover:bg-gray-100 dark:hover:bg-brand-hover transition-colors"
-          >
-            <span className="dark:hidden">☀️</span>
-            <span className="hidden dark:inline">🌙</span>
-          </button>
+          {/* Theme toggle removed as requested */}
         </div>
       </div>
       <div className="h-1 bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-500" />
