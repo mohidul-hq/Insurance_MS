@@ -118,7 +118,7 @@ export default function PolicyTable({ onView, onEdit }) {
                 <td className="px-4 py-2 text-right"><LopvBadge value={it.LOPV} /></td>
                 <td className="px-4 py-2">{it.Reference || '-'}</td>
                 <td className="px-4 py-2 max-w-[16rem] truncate text-gray-700 dark:text-brand-muted" title={it.Remark || ''}>{it.Remark || '-'}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{formatDateTime(it.$createdAt)}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{it.$createdAt ? new Date(it.$createdAt).toLocaleDateString() : ''}</td>
                 <td className="px-4 py-2">
                   <div className="flex items-center gap-2">
                     <button className="px-2 py-1 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" onClick={() => onView(it)}>View</button>

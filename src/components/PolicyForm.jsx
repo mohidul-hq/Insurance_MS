@@ -23,6 +23,8 @@ export default function PolicyForm({ initial, onCancel, onSaved }) {
   const [policyFile, setPolicyFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
+  const [celebrate, setCelebrate] = useState([])
+  const [successBanner, setSuccessBanner] = useState('')
 
   useEffect(() => {
     if (initial) {
@@ -86,8 +88,11 @@ export default function PolicyForm({ initial, onCancel, onSaved }) {
           push(`File uploaded but ${field} not saved (add attribute "${field}" to collection then re-upload)`, { type: 'error' })
         }
       } else {
-        const { doc, uploadError, suppressedFileLink } = await createPolicy(form, { policyFile })
-        push('Policy created successfully')
+  const { doc, uploadError, suppressedFileLink } = await createPolicy(form, { policyFile })
+  push('Policy created successfully')
+  showSuccessBanner('Policy added successfully')
+        // Trigger happy bubble blast celebration on create
+        triggerCelebration()
         if (uploadError) {
           const msg = (uploadError && uploadError.message) ? String(uploadError.message) : 'Policy created, but PDF upload failed'
           push(msg.includes('Unauthorized') || msg.includes('authorized') ? 'PDF upload failed: not authorized (check Appwrite Storage permissions)' : `Warning: ${msg}`, { type: 'error' })
@@ -107,6 +112,28 @@ export default function PolicyForm({ initial, onCancel, onSaved }) {
     }
   }
 
+  function showSuccessBanner(text) {
+    setSuccessBanner(text)
+    setTimeout(() => setSuccessBanner(''), 2000)
+  }
+
+  // Celebration animation: lightweight bubble/confetti blast
+  function triggerCelebration() {
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+    const pieces = Array.from({ length: 24 }, (_, i) => ({
+      id: Date.now() + '-' + i,
+      left: Math.random() * 100, // vw percent
+      size: 6 + Math.random() * 10,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      delay: Math.random() * 120,
+      duration: 700 + Math.random() * 900,
+      drift: (Math.random() - 0.5) * 40,
+    }))
+    setCelebrate(pieces)
+    // Auto-clear after animation completes
+    setTimeout(() => setCelebrate([]), 2000)
+  }
+
   const accent = getLopvStyle(form.LOPV)
 
   return (
@@ -115,6 +142,34 @@ export default function PolicyForm({ initial, onCancel, onSaved }) {
            style={{ boxShadow: form.LOPV ? undefined : undefined }}>
         {form.LOPV && (
           <div className={`absolute inset-x-0 -top-0.5 h-1 rounded-t-xl bg-gradient-to-r ${accent.grad} bg-lg-gradient animate-gradient`} />
+        )}
+        {/* Celebration overlay */}
+        {celebrate.length > 0 && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {celebrate.map((p) => (
+              <span
+                key={p.id}
+                style={{
+                  left: p.left + '%',
+                  width: p.size,
+                  height: p.size,
+                  backgroundColor: p.color,
+                  transform: `translateY(-10%) translateX(0)`,
+                  animationDelay: `${p.delay}ms`,
+                  animationDuration: `${p.duration}ms`,
+                }}
+                className="absolute top-0 rounded-full opacity-90 animate-bubble-blast"
+              />
+            ))}
+          </div>
+        )}
+        {/* Success banner */}
+        {successBanner && (
+          <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 z-10">
+            <div className="px-4 py-2 rounded-lg bg-emerald-600 text-white shadow-md animate-rise-in">
+              {successBanner}
+            </div>
+          </div>
         )}
         <div className="card rounded-xl p-6 animate-pop">
   <h2 className="text-lg font-semibold text-gray-800 dark:text-brand-text transition-colors mb-4">{isEdit ? 'Edit Policy' : 'Add New Policy'}</h2>
