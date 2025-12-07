@@ -11,7 +11,7 @@ export default function PolicyTable({ onView, onEdit }) {
   const [search, setSearch] = useState('')
   const [offset, setOffset] = useState(0)
   const [total, setTotal] = useState(0)
-  const limit = 10
+  const limit = 5
 
   const load = async ({ reset = false, offsetOverride } = {}) => {
     try {
@@ -19,13 +19,9 @@ export default function PolicyTable({ onView, onEdit }) {
       const nextOffset = reset ? 0 : (offsetOverride ?? offset)
       const res = await getPolicies({ search, limit, offset: nextOffset })
       setTotal(res.total)
-      if (reset) {
-        setItems(res.documents)
-        setOffset(0)
-      } else {
-        setItems((arr) => [...arr, ...res.documents])
-        setOffset(nextOffset)
-      }
+      // Replace page items instead of appending to keep render fast
+      setItems(res.documents)
+      setOffset(nextOffset)
     } catch (e) {
       console.error(e)
       setError('Something went wrong. Try again.')
@@ -53,7 +49,30 @@ export default function PolicyTable({ onView, onEdit }) {
     }
   }
 
-  const hasMore = useMemo(() => items.length < total, [items.length, total])
+  const hasMore = useMemo(() => offset + limit < total, [offset, limit, total])
+  const hasPrev = useMemo(() => offset > 0, [offset])
+  const currentPage = useMemo(() => Math.floor(offset / limit) + 1, [offset, limit])
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / limit)), [total, limit])
+
+  // Prefetch helpers: warm cache for faster page transition on hover
+  const prefetchNext = async () => {
+    if (loading) return
+    const nextOffset = offset + limit
+    if (nextOffset < total) {
+      try {
+        await getPolicies({ search, limit, offset: nextOffset })
+      } catch {}
+    }
+  }
+  const prefetchPrev = async () => {
+    if (loading) return
+    const prevOffset = Math.max(0, offset - limit)
+    if (prevOffset !== offset) {
+      try {
+        await getPolicies({ search, limit, offset: prevOffset })
+      } catch {}
+    }
+  }
 
   return (
     <div className="card rounded-xl shadow animate-theme">
@@ -114,19 +133,28 @@ export default function PolicyTable({ onView, onEdit }) {
       </div>
 
       <div className="p-4 flex items-center justify-between">
-  <div className="text-sm text-gray-600 dark:text-brand-muted">Showing {items.length} of {total}</div>
-        {hasMore && (
+        <div className="text-sm text-gray-600 dark:text-brand-muted">Showing {items.length} of {total}</div>
+        <div className="flex items-center gap-2">
           <button
-            disabled={loading}
-            onClick={() => {
-              const next = offset + limit
-              load({ offsetOverride: next })
-            }}
-            className="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-brand-hover disabled:opacity-50 transition-colors"
+            disabled={loading || !hasPrev}
+            onClick={() => load({ offsetOverride: Math.max(0, offset - limit) })}
+            onMouseEnter={prefetchPrev}
+            className="group inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-brand-border bg-white dark:bg-brand-card text-gray-700 dark:text-brand-text hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Loading...' : 'Load more'}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 19l-7-7 7-7"/></svg>
+            <span className="hidden sm:inline">Prev</span>
           </button>
-        )}
+          <span className="text-sm text-gray-700 dark:text-brand-text px-2 py-1 rounded bg-gray-100 dark:bg-brand-hover border border-gray-200 dark:border-brand-border">Page {currentPage} / {totalPages}</span>
+          <button
+            disabled={loading || !hasMore}
+            onClick={() => load({ offsetOverride: offset + limit })}
+            onMouseEnter={prefetchNext}
+            className="group inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-brand-border bg-white dark:bg-brand-card text-gray-700 dark:text-brand-text hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
 
       {loading && items.length === 0 && (

@@ -2,7 +2,7 @@ import { databases, storage, ID, Query, config } from '../lib/appwriteClient'
 
 // In-memory cache for faster UI reads
 const _cache = new Map()
-const PAGE_SIZE = 10
+const PAGE_SIZE = 5
 function _key(params) {
   const { search = '', filter = '', limit = PAGE_SIZE, offset = 0 } = params || {}
   return JSON.stringify({ search, filter, limit, offset })
@@ -127,6 +127,55 @@ export async function getPolicies({ search = '', filter = '', limit = PAGE_SIZE,
   const result = { documents, total: res.total, serverSearch: false }
   _set({ search, filter, limit, offset }, result)
   return result
+}
+
+// Best-effort prefetch that warms the in-memory cache without affecting UI state.
+// Returns cached or fetched result, but swallows errors to avoid noisy logs in hover interactions.
+export async function prefetchPolicies({ search = '', filter = '', limit = PAGE_SIZE, offset = 0 } = {}) {
+  try {
+    const cached = _get({ search, filter, limit, offset })
+    if (cached) return cached
+    // Mirror getPolicies query building for consistency
+    const base = [Query.limit(limit), Query.offset(offset), Query.orderDesc('$createdAt')]
+    if (filter) base.push(Query.equal('LOPV', filter))
+
+    if (search) {
+      try {
+        const q = [...base, Query.search('Registration_Number', search)]
+        const res = await databases.listDocuments(config.databaseId, config.collectionId, q)
+        const result = { documents: res.documents, total: res.total, serverSearch: true }
+        _set({ search, filter, limit, offset }, result)
+        return result
+      } catch {}
+    }
+
+    const res = await databases.listDocuments(config.databaseId, config.collectionId, base)
+    let documents = res.documents
+    if (search) {
+      const s = search.toLowerCase()
+      documents = documents.filter((d) =>
+        [d.Registration_Number, d.Customer_name, d.Contact, d.Reference, d.Remark]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(s))
+      )
+    }
+    const result = { documents, total: res.total, serverSearch: false }
+    _set({ search, filter, limit, offset }, result)
+    return result
+  } catch {
+    return null
+  }
+}
+
+// Convenience helper to warm adjacent page cache for hover interactions
+// direction: 'next' | 'prev'
+export async function warmAdjacentPage({ search = '', filter = '', limit = PAGE_SIZE, offset = 0, total = 0 }, direction = 'next') {
+  const pageCount = Math.max(1, Math.ceil((Number(total) || 0) / (Number(limit) || PAGE_SIZE)))
+  const currentPage = Math.floor((Number(offset) || 0) / (Number(limit) || PAGE_SIZE)) + 1
+  let targetPage = direction === 'prev' ? currentPage - 1 : currentPage + 1
+  if (targetPage < 1 || targetPage > pageCount) return null
+  const targetOffset = (targetPage - 1) * (Number(limit) || PAGE_SIZE)
+  return prefetchPolicies({ search, filter, limit, offset: targetOffset })
 }
 
 export async function uploadPolicyPdf(file, registrationNumber) {
