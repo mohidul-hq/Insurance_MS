@@ -9,6 +9,7 @@ export default function PolicyTable({ onView, onEdit }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [searchingAll, setSearchingAll] = useState(false)
   const [offset, setOffset] = useState(0)
   const [total, setTotal] = useState(0)
   const limit = 5
@@ -30,8 +31,44 @@ export default function PolicyTable({ onView, onEdit }) {
     }
   }
 
+  // When searching, collect matches across all pages without changing service logic
+  const loadAllMatches = async () => {
+    try {
+      setLoading(true)
+      setSearchingAll(true)
+      const pageSize = 50 // larger batch for search aggregation
+      let all = []
+      let off = 0
+      let totalAll = 0
+      let serverSearch = false
+      for (let i = 0; i < 20; i++) { // cap to ~1000 docs to avoid runaway
+        const res = await getPolicies({ search, limit: pageSize, offset: off })
+        if (i === 0) { totalAll = res.total || 0; serverSearch = !!res.serverSearch }
+        // If serverSearch, results are already filtered; else we aggregate per-page filtered docs
+        all = all.concat(res.documents || [])
+        off += pageSize
+        if (off >= (res.total || 0)) break
+      }
+      setItems(all)
+      setTotal(all.length)
+      setOffset(0)
+    } catch (e) {
+      console.error(e)
+      setError('Search failed. Try again.')
+    } finally {
+      setLoading(false)
+      setSearchingAll(false)
+    }
+  }
+
   useEffect(() => {
-    const t = setTimeout(() => load({ reset: true, offsetOverride: 0 }), 300)
+    const t = setTimeout(() => {
+      if (search && search.trim().length > 0) {
+        loadAllMatches()
+      } else {
+        load({ reset: true, offsetOverride: 0 })
+      }
+    }, 300)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
@@ -49,7 +86,7 @@ export default function PolicyTable({ onView, onEdit }) {
     }
   }
 
-  const hasMore = useMemo(() => offset + limit < total, [offset, limit, total])
+  const hasMore = useMemo(() => !searchingAll && (offset + limit < total), [offset, limit, total, searchingAll])
   const hasPrev = useMemo(() => offset > 0, [offset])
   const currentPage = useMemo(() => Math.floor(offset / limit) + 1, [offset, limit])
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / limit)), [total, limit])
@@ -144,7 +181,9 @@ export default function PolicyTable({ onView, onEdit }) {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 19l-7-7 7-7"/></svg>
             <span className="hidden sm:inline">Prev</span>
           </button>
-          <span className="text-sm text-gray-700 dark:text-brand-text px-2 py-1 rounded bg-gray-100 dark:bg-brand-hover border border-gray-200 dark:border-brand-border">Page {currentPage} / {totalPages}</span>
+          <span className="text-sm text-gray-700 dark:text-brand-text px-2 py-1 rounded bg-gray-100 dark:bg-brand-hover border border-gray-200 dark:border-brand-border">
+            {searchingAll ? 'Search results' : `Page ${currentPage} / ${totalPages}`}
+          </span>
           <button
             disabled={loading || !hasMore}
             onClick={() => load({ offsetOverride: offset + limit })}
