@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { account } from '../lib/appwriteClient'
+import { sendLoginAlert } from '../services/mail'
 
 const AuthContext = createContext(null)
 
@@ -89,6 +90,8 @@ export function AuthProvider({ children }) {
       // auto login after registration
       await account.createEmailSession(email, password)
       await fetchUser()
+      // Fire login alert after successful auto-login
+      try { await sendLoginAlert({ email, name }) } catch { /* non-blocking */ }
       return newUser
     } catch (err) {
       setError(err.message)
@@ -101,6 +104,8 @@ export function AuthProvider({ children }) {
     try {
       await account.createEmailSession(email, password)
       await fetchUser()
+      // Fire login alert
+      try { await sendLoginAlert({ email }) } catch { /* non-blocking */ }
     } catch (err) {
       setError(err.message)
       throw err

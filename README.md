@@ -126,3 +126,37 @@ If deploying to GitHub Pages, the redirect URL must include the repository sub-p
 https://mohidul-hq.github.io/Insurance_MS/oauth
 ```
 Add this to provider allowed redirects before testing.
+
+## Login Email Alerts
+
+You can enable a login alert email that fires on successful sign-ins (email/password, registration auto-login, and after OAuth completes).
+
+### Configure EmailJS
+Client-side email is powered by EmailJS.
+
+1. Create an account at https://www.emailjs.com and add a service.
+2. Create a template for login alerts (e.g., `login_alert`) with parameters (match names exactly):
+	- `email`
+	- `name`
+	- `time`
+	- `userAgent`
+	- `origin`
+	- `ipadress`  ← intentionally spelled as in the template
+	- `message`
+3. Add these to your `.env`:
+```
+VITE_EMAILJS_SERVICE_ID=your_service_id
+VITE_EMAILJS_TEMPLATE_ID_LOGIN=your_template_id
+VITE_EMAILJS_PUBLIC_KEY=your_public_key
+```
+4. Restart the dev server.
+
+The code will silently skip sending if env vars are missing, so it won't break login during local dev.
+
+### Where it’s wired
+- `src/services/mail.js` implements `sendLoginAlert` via EmailJS REST.
+- `src/components/AuthProvider.jsx` calls `sendLoginAlert` after successful login and post-registration auto-login.
+
+### Privacy & Security
+- This is a client-side email trigger; template recipients should be controlled by your EmailJS configuration.
+- Do not include secrets in templates. Use only non-sensitive metadata.
