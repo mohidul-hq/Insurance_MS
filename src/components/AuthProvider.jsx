@@ -13,10 +13,11 @@ export function AuthProvider({ children }) {
   const warnTimer = useRef(null)
   const [idleWarning, setIdleWarning] = useState(false)
   const [idleCountdown, setIdleCountdown] = useState(60) // seconds to decide
+  const idleWarningRef = useRef(false)
 
-  // Config: 2 hours of inactivity triggers warning, then 60s before auto logout
-  const IDLE_MS = 2 * 60 
-  const WARN_SECONDS = 60
+  // Config: 2 minutes of inactivity triggers warning, then countdown before auto logout
+  const IDLE_MS = 2 * 60 * 1000
+  const WARN_SECONDS = 30
 
   const fetchUser = useCallback(async () => {
     try {
@@ -52,6 +53,8 @@ export function AuthProvider({ children }) {
 
   const startIdleTimer = useCallback(() => {
     clearIdleTimers()
+    // Do not start idle timers when not logged in
+    if (!user) return
     idleTimer.current = setTimeout(() => {
       // show warning and start countdown
       setIdleWarning(true)
@@ -59,7 +62,7 @@ export function AuthProvider({ children }) {
       warnTimer.current = setInterval(() => {
         setIdleCountdown((s) => {
           if (s <= 1) {
-            // time's up → logout
+            // Auto logout once countdown ends
             clearIdleTimers()
             logout()
             return 0
@@ -68,20 +71,32 @@ export function AuthProvider({ children }) {
         })
       }, 1000)
     }, IDLE_MS)
-  }, [clearIdleTimers])
+  }, [clearIdleTimers, user])
 
   // User activity resets idle timer
   useEffect(() => {
-    const onActivity = () => startIdleTimer()
+    const onActivity = () => {
+      // While the expiry popup is visible, ignore user activity
+      if (idleWarningRef.current) return
+      startIdleTimer()
+    }
     const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll']
-    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }))
-    // Start when app mounts and once user is fetched
-    startIdleTimer()
+    if (user) {
+      events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }))
+      // Start when a user is present
+      startIdleTimer()
+    }
     return () => {
       events.forEach((e) => window.removeEventListener(e, onActivity))
       clearIdleTimers()
     }
-  }, [startIdleTimer, clearIdleTimers])
+  }, [startIdleTimer, clearIdleTimers, user])
+
+  // Keep a ref in sync so activity handler (which doesn't re-bind on every state change)
+  // can observe the latest visibility of the idle warning
+  useEffect(() => {
+    idleWarningRef.current = idleWarning
+  }, [idleWarning])
 
   const register = async (email, password, name) => {
     setError(null)
@@ -137,15 +152,27 @@ export function AuthProvider({ children }) {
     login,
     loginWithGoogle,
     logout,
-    stayLoggedIn: () => { clearIdleTimers(); startIdleTimer() },
+    stayLoggedIn: async () => {
+      // Attempt to refresh/extend the current Appwrite session
+      try {
+        await account.updateSession('current')
+      } catch {
+        // Non-blocking: if refresh isn't supported or fails, still proceed
+      }
+      // Hide the warning and fully reset timers
+      setIdleWarning(false)
+      clearIdleTimers()
+      startIdleTimer()
+    },
   }
 
   return (
     <AuthContext.Provider value={value}>
       {children}
-      {idleWarning && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" />
+      {idleWarning && user && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true">
+          {/* Dim + blur the background. Light in light-mode, darker in dark-mode */}
+          <div className="absolute inset-0 bg-white/40 dark:bg-black/60 backdrop-blur-sm backdrop-saturate-150 transition-colors" />
           <div className="relative mx-4 sm:mx-0 w-full max-w-md rounded-xl border border-white/20 bg-white/90 dark:bg-brand-card shadow-xl p-4">
             <div className="flex items-start gap-3">
               <div className="flex-1">
@@ -154,8 +181,18 @@ export function AuthProvider({ children }) {
               </div>
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
-              <button onClick={logout} className="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600">Log out now</button>
-              <button onClick={() => { value.stayLoggedIn() }} className="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white">Stay logged in</button>
+              <button
+                onClick={logout}
+                className="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600"
+              >
+                Log out
+              </button>
+              <button
+                onClick={value.stayLoggedIn}
+                className="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Stay logged in
+              </button>
             </div>
           </div>
         </div>
