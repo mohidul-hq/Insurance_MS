@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
   const [idleCountdown, setIdleCountdown] = useState(60) // seconds to decide
 
   // Config: 2 hours of inactivity triggers warning, then 60s before auto logout
-  const IDLE_MS = 2 * 60 * 60 * 1000
+  const IDLE_MS = 2 * 60 
   const WARN_SECONDS = 60
 
   const fetchUser = useCallback(async () => {
